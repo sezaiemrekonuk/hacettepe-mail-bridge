@@ -1,0 +1,24 @@
+services:
+  mail-bridge:
+    build: .
+    container_name: hu-mail-bridge
+    restart: unless-stopped
+
+    # Forward .env file into the container
+    env_file:
+      - .env
+
+    volumes:
+      # Chromium persistent session (login cookies, etc.)
+      - ./user_data:/app/user_data
+      # SQLite DB for seen-message IDs
+      - ./data:/app/data
+
+    # Chromium needs /dev/shm larger than the Docker default 64 MB
+    shm_size: "256mb"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
