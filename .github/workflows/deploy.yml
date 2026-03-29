@@ -23,6 +23,11 @@ jobs:
             APP_DIR=/opt/hu-mail-bridge
             REPO=https://github.com/sezaiemrekonuk/hacettepe-mail-bridge.git
 
+            # ── Ensure git is installed ──────────────────────────────────────
+            if ! command -v git &>/dev/null; then
+              apt-get update -qq && apt-get install -y --no-install-recommends git
+            fi
+
             # ── First-time: convert rsync deployment to git ──────────────────
             if [ ! -d "$APP_DIR/.git" ]; then
               echo "No git repo found — initialising from remote …"
