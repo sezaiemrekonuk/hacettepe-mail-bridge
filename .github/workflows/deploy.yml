@@ -27,6 +27,7 @@ jobs:
             if ! command -v git &>/dev/null; then
               apt-get update -qq && apt-get install -y --no-install-recommends git
             fi
+            git config --global --add safe.directory "$APP_DIR"
 
             # ── First-time: convert rsync deployment to git ──────────────────
             if [ ! -d "$APP_DIR/.git" ]; then
