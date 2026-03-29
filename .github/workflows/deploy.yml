@@ -1,0 +1,50 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key:      ${{ secrets.VPS_SSH_KEY }}
+          port:     22
+          script: |
+            set -euo pipefail
+            APP_DIR=/opt/hu-mail-bridge
+            REPO=https://github.com/sezaiemrekonuk/hacettepe-mail-bridge.git
+
+            # ── First-time: convert rsync deployment to git ──────────────────
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "No git repo found — initialising from remote …"
+              cd "$APP_DIR"
+              git init -b main
+              git remote add origin "$REPO"
+              git fetch --depth=1 origin main
+              # Keep .env, user_data/, data/ (not tracked by git)
+              git checkout -f origin/main
+              git branch --set-upstream-to=origin/main main
+            fi
+
+            # ── Pull latest code ─────────────────────────────────────────────
+            cd "$APP_DIR"
+            git fetch --depth=1 origin main
+            git reset --hard origin/main
+
+            # ── Rebuild & restart ────────────────────────────────────────────
+            docker compose build --pull --no-cache
+            docker compose down --remove-orphans
+            docker compose up -d
+
+            echo ""
+            echo "Deployment complete. Container status:"
+            docker compose ps
