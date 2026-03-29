@@ -5,6 +5,7 @@ Entry point. Runs the FastAPI web server (which spawns the scraper loop as a bac
   python -m src.main --auth <hu_email>  – interactive auth for one account
 """
 import argparse
+import datetime
 import logging
 import os
 import time
@@ -34,6 +35,24 @@ GMAIL_APP_PASS = os.environ.get("GMAIL_APP_PASSWORD", "")
 BASE_DIR           = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_DATA_BASE_DIR = os.path.join(BASE_DIR, "user_data")
 
+# Per-user fetch state: {app_id: {"time": "...", "status": "ok"|"running"|"error: ..."}}
+_fetch_state: dict[int, dict] = {}
+_fetch_lock = threading.Lock()
+
+
+def _now() -> str:
+    return datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def get_fetch_state() -> dict[int, dict]:
+    with _fetch_lock:
+        return dict(_fetch_state)
+
+
+def _set_fetch_state(app_id: int, status: str) -> None:
+    with _fetch_lock:
+        _fetch_state[app_id] = {"time": _now(), "status": status}
+
 
 def _user_data_dir(app_id: int) -> str:
     d = os.path.join(USER_DATA_BASE_DIR, str(app_id))
@@ -49,6 +68,7 @@ def poll_user(pw, user_row) -> None:
     hu_pass      = decrypt_password(user_row["hu_password_enc"])
     gmail_target = user_row["gmail_target"]
 
+    _set_fetch_state(app_id, "running")
     udd = _user_data_dir(app_id)
     try:
         ctx = pw.chromium.launch_persistent_context(
@@ -67,6 +87,7 @@ def poll_user(pw, user_row) -> None:
             ensure_logged_in(page, hu_email, hu_pass)
         except RuntimeError as exc:
             logger.error("[%s] Login failed: %s", hu_email, exc)
+            _set_fetch_state(app_id, f"error: login failed")
             ctx.close()
             return
 
@@ -77,6 +98,7 @@ def poll_user(pw, user_row) -> None:
             new_msgs = scrape_new_messages(page, _is_seen, _mark_seen)
         except Exception as exc:
             logger.error("[%s] Scrape failed: %s", hu_email, exc)
+            _set_fetch_state(app_id, f"error: scrape failed")
             ctx.close()
             return
 
@@ -92,8 +114,27 @@ def poll_user(pw, user_row) -> None:
             except Exception as exc:
                 logger.error("[%s] Forward failed '%s': %s", hu_email, msg.subject, exc)
         ctx.close()
+        _set_fetch_state(app_id, f"ok ({len(new_msgs)} new)")
     except Exception as exc:
         logger.error("[%s] Unexpected error: %s", hu_email, exc)
+        _set_fetch_state(app_id, f"error: {exc}")
+
+
+def trigger_fetch_async(app_id: int | None = None) -> None:
+    """Trigger an immediate fetch in a background thread (non-blocking)."""
+    from src.web.db import list_applications
+
+    def _run():
+        users = list_applications(status="active")
+        if app_id is not None:
+            users = [u for u in users if u["id"] == app_id]
+        if not users:
+            return
+        with sync_playwright() as pw:
+            for user in users:
+                poll_user(pw, user)
+
+    threading.Thread(target=_run, daemon=True).start()
 
 
 def run_scraper_loop() -> None:

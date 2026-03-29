@@ -78,6 +78,18 @@ class _AdminRedirect(Exception):
     pass
 
 
+_DEPLOY_FILE = Path(os.environ.get("DB_PATH", "/app/data/hub.db")).parent / "last_deploy.txt"
+
+
+def _read_last_deploy() -> str:
+    try:
+        if _DEPLOY_FILE.exists():
+            return _DEPLOY_FILE.read_text().strip()
+    except Exception:
+        pass
+    return "Unknown"
+
+
 # --------------------------------------------------------------------------- #
 # Lifespan
 # --------------------------------------------------------------------------- #
@@ -199,10 +211,14 @@ async def admin_dashboard(request: Request):
     except _AdminRedirect:
         return RedirectResponse("/admin/login", status_code=303)
 
+    from src.main import get_fetch_state
     fernet_key_set = bool(os.environ.get("FERNET_KEY", ""))
-    pending = list_applications(status="pending")
-    active = list_applications(status="active")
+    pending  = list_applications(status="pending")
+    active   = list_applications(status="active")
     rejected = list_applications(status="rejected")
+
+    last_deploy = _read_last_deploy()
+    fetch_state = get_fetch_state()  # {app_id: {"time": ..., "status": ...}}
 
     return templates.TemplateResponse(
         "admin.html",
@@ -213,6 +229,8 @@ async def admin_dashboard(request: Request):
             "rejected": rejected,
             "fernet_key_set": fernet_key_set,
             "admin_email": os.environ.get("ADMIN_EMAIL", "sezaiemrekonuk@gmail.com"),
+            "last_deploy": last_deploy,
+            "fetch_state": fetch_state,
         },
     )
 
@@ -248,6 +266,45 @@ async def admin_delete(request: Request, app_id: int):
 
     delete_application(app_id)
     return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/trigger/{app_id}")
+async def admin_trigger_user(request: Request, app_id: int):
+    try:
+        require_admin(request)
+    except _AdminRedirect:
+        return RedirectResponse("/admin/login", status_code=303)
+
+    from src.main import trigger_fetch_async
+    trigger_fetch_async(app_id)
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/trigger-all")
+async def admin_trigger_all(request: Request):
+    try:
+        require_admin(request)
+    except _AdminRedirect:
+        return RedirectResponse("/admin/login", status_code=303)
+
+    from src.main import trigger_fetch_async
+    trigger_fetch_async()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.get("/admin/status")
+async def admin_status(request: Request):
+    """Live status: last deploy time + per-user fetch state (JSON)."""
+    try:
+        require_admin(request)
+    except _AdminRedirect:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    from src.main import get_fetch_state
+    return JSONResponse({
+        "last_deploy": _read_last_deploy(),
+        "fetch_state": {str(k): v for k, v in get_fetch_state().items()},
+    })
 
 
 @app.get("/admin/logs")

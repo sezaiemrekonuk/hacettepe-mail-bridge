@@ -897,6 +897,54 @@ main { flex: 1; }
 }
 
 /* -------------------------------------------------------------------------
+   Stats bar — deploy time cell
+   ------------------------------------------------------------------------- */
+.stat-item-deploy {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.stat-deploy-time {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------------------
+   Fetch status cells
+   ------------------------------------------------------------------------- */
+.cell-fetch {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.fetch-time {
+  color: var(--muted);
+  display: block;
+  font-size: 0.75rem;
+}
+
+.fetch-status {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 20px;
+  margin-top: 2px;
+}
+
+.fetch-status-ok      { background: var(--active-bg);   color: var(--active-text);   border: 1px solid var(--active-border); }
+.fetch-status-running { background: var(--pending-bg);  color: var(--pending-text);  border: 1px solid var(--pending-border); }
+.fetch-status-error   { background: var(--rejected-bg); color: var(--rejected-text); border: 1px solid var(--rejected-border); }
+
+.fetch-never {
+  color: var(--muted-light);
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------
    Log Panel
    ------------------------------------------------------------------------- */
 .logs-header {

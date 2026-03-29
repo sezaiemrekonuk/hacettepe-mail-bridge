@@ -40,6 +40,10 @@ jobs:
             git fetch --depth=1 origin main
             git reset --hard origin/main
 
+            # ── Stamp deploy time (shown in admin panel) ─────────────────────
+            mkdir -p "$APP_DIR/data"
+            date -u '+%Y-%m-%d %H:%M:%S UTC' > "$APP_DIR/data/last_deploy.txt"
+
             # ── Rebuild & restart ────────────────────────────────────────────
             docker compose build --pull --no-cache
             docker compose down --remove-orphans
