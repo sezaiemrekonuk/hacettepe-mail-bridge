@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}HU Mail Bridge — Email Forwarding{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-badge">Hacettepe University</div>
+    <h1 class="hero-title">Hacettepe Mail Bridge</h1>
+    <p class="hero-subtitle">
+      Forward your Hacettepe University emails to Gmail automatically.
+      Never miss an important university notification again.
+    </p>
+  </div>
+</section>
+
+<section class="apply-section">
+  <div class="container apply-grid">
+
+    <div class="apply-card card">
+      <div class="card-header">
+        <h2 class="card-title">Apply for Forwarding</h2>
+        <p class="card-desc">Fill in your details below and the admin will review your application.</p>
+      </div>
+
+      {% if applied %}
+      <div class="alert alert-success">
+        <div class="alert-icon">&#10003;</div>
+        <div class="alert-body">
+          <strong>Application submitted!</strong>
+          <p>Your application has been submitted. The admin will review it shortly.</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/apply" class="apply-form">
+        <div class="form-group">
+          <label class="form-label" for="hu_email">Hacettepe Email</label>
+          <input
+            class="form-input"
+            type="email"
+            id="hu_email"
+            name="hu_email"
+            placeholder="user@hacettepe.edu.tr"
+            required
+            autocomplete="username"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hu_password">Hacettepe Password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="hu_password"
+            name="hu_password"
+            placeholder="Your OWA password"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="gmail_target">Gmail Address</label>
+          <input
+            class="form-input"
+            type="email"
+            id="gmail_target"
+            name="gmail_target"
+            placeholder="you@gmail.com"
+            required
+            autocomplete="email"
+          />
+          <span class="form-hint">Forwarded emails will be sent here.</span>
+        </div>
+
+        <div class="security-note">
+          <span class="security-icon">&#128274;</span>
+          <span>Your Hacettepe credentials are encrypted and stored securely. They are only used to log in to the mail portal.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Apply for Forwarding</button>
+      </form>
+    </div>
+
+    <div class="how-it-works">
+      <h3 class="section-label">How it works</h3>
+      <ol class="steps-list">
+        <li class="step">
+          <div class="step-number">1</div>
+          <div class="step-body">
+            <strong class="step-title">Fill the form</strong>
+            <p class="step-desc">Enter your Hacettepe credentials and the Gmail address where you want to receive emails.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-number">2</div>
+          <div class="step-body">
+            <strong class="step-title">Admin reviews</strong>
+            <p class="step-desc">The service admin will review and approve your application, usually within a day.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-number">3</div>
+          <div class="step-body">
+            <strong class="step-title">Automatic forwarding</strong>
+            <p class="step-desc">New emails from your Hacettepe inbox are automatically forwarded to your Gmail every 15 minutes.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

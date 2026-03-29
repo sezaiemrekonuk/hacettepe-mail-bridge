@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login — HU Mail Bridge{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card card">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <span class="logo-icon-lg">&#128274;</span>
+      </div>
+      <h1 class="auth-title">Admin Login</h1>
+      <p class="auth-subtitle">Sign in to manage forwarding applications</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+      <div class="alert-icon">&#33;</div>
+      <div class="alert-body">
+        <strong>Invalid credentials.</strong>
+        <p>The password you entered is incorrect. Please try again.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/admin/login" class="auth-form">
+      <div class="form-group">
+        <label class="form-label" for="admin_email_display">Admin Email</label>
+        <input
+          class="form-input form-input-readonly"
+          type="email"
+          id="admin_email_display"
+          value="{{ admin_email }}"
+          readonly
+          tabindex="-1"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Admin password"
+          required
+          autofocus
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+
+    <div class="auth-footer">
+      <a href="/" class="text-link">Back to home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

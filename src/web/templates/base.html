@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}HU Mail Bridge{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <span class="logo-icon">✉</span>
+        <span class="logo-text">HU Mail Bridge</span>
+      </a>
+      <nav class="header-nav">
+        <a href="/admin" class="nav-link">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  {% if msg %}
+  <div class="flash flash-error container">
+    <span>{{ msg }}</span>
+  </div>
+  {% endif %}
+
+  {% block flash %}{% endblock %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span class="footer-text">
+        HU Mail Bridge &mdash; Hacettepe University email forwarding service
+      </span>
+    </div>
+  </footer>
+</body>
+</html>

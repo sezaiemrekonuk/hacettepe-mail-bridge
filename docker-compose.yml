@@ -4,14 +4,16 @@ services:
     container_name: hu-mail-bridge
     restart: unless-stopped
 
-    # Forward .env file into the container
     env_file:
       - .env
 
+    ports:
+      - "8000:8000"
+
     volumes:
-      # Chromium persistent session (login cookies, etc.)
+      # Chromium persistent sessions per user
       - ./user_data:/app/user_data
-      # SQLite DB for seen-message IDs
+      # SQLite database (hub.db)
       - ./data:/app/data
 
     # Chromium needs /dev/shm larger than the Docker default 64 MB

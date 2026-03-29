@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — HU Mail Bridge{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <div class="container">
+
+    <div class="admin-topbar">
+      <div class="admin-topbar-left">
+        <h1 class="page-title">Admin Dashboard</h1>
+        <span class="admin-user">{{ admin_email }}</span>
+      </div>
+      <a href="/admin/logout" class="btn btn-outline btn-sm">Sign out</a>
+    </div>
+
+    {% if not fernet_key_set %}
+    <div class="alert alert-warning">
+      <div class="alert-icon">&#9888;</div>
+      <div class="alert-body">
+        <strong>FERNET_KEY is not set.</strong>
+        <p>Encrypted passwords are using a temporary key and will be lost on restart.
+           Generate a key with <code>python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"</code>
+           and set it as <code>FERNET_KEY</code> in your <code>.env</code> file.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-value">{{ pending | length }}</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value stat-value-active">{{ active | length }}</span>
+        <span class="stat-label">Active</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-value stat-value-rejected">{{ rejected | length }}</span>
+        <span class="stat-label">Rejected</span>
+      </div>
+    </div>
+
+    <!-- Pending Applications -->
+    <section class="admin-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Pending Applications
+          {% if pending %}
+          <span class="badge badge-pending">{{ pending | length }}</span>
+          {% endif %}
+        </h2>
+      </div>
+
+      {% if pending %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>HU Email</th>
+              <th>Gmail Target</th>
+              <th>Applied At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in pending %}
+            <tr>
+              <td class="cell-email">{{ app.hu_email }}</td>
+              <td class="cell-email">{{ app.gmail_target }}</td>
+              <td class="cell-date">{{ app.created_at }}</td>
+              <td class="cell-actions">
+                <form method="POST" action="/admin/approve/{{ app.id }}" style="display:inline">
+                  <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                </form>
+                <form method="POST" action="/admin/reject/{{ app.id }}" style="display:inline">
+                  <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p>No pending applications.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Active Users -->
+    <section class="admin-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Active Users
+          {% if active %}
+          <span class="badge badge-active">{{ active | length }}</span>
+          {% endif %}
+        </h2>
+      </div>
+
+      {% if active %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>HU Email</th>
+              <th>Gmail Target</th>
+              <th>Approved At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in active %}
+            <tr>
+              <td class="cell-email">{{ app.hu_email }}</td>
+              <td class="cell-email">{{ app.gmail_target }}</td>
+              <td class="cell-date">{{ app.updated_at }}</td>
+              <td class="cell-actions">
+                <form method="POST" action="/admin/delete/{{ app.id }}" style="display:inline"
+                      onsubmit="return confirm('Delete {{ app.hu_email }}? This cannot be undone.')">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p>No active users.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Rejected -->
+    <section class="admin-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          Rejected
+          {% if rejected %}
+          <span class="badge badge-rejected">{{ rejected | length }}</span>
+          {% endif %}
+        </h2>
+      </div>
+
+      {% if rejected %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>HU Email</th>
+              <th>Gmail Target</th>
+              <th>Rejected At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in rejected %}
+            <tr>
+              <td class="cell-email">{{ app.hu_email }}</td>
+              <td class="cell-email">{{ app.gmail_target }}</td>
+              <td class="cell-date">{{ app.updated_at }}</td>
+              <td class="cell-actions">
+                <form method="POST" action="/admin/approve/{{ app.id }}" style="display:inline">
+                  <button type="submit" class="btn btn-success btn-sm">Re-approve</button>
+                </form>
+                <form method="POST" action="/admin/delete/{{ app.id }}" style="display:inline"
+                      onsubmit="return confirm('Delete {{ app.hu_email }}? This cannot be undone.')">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p>No rejected applications.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- System Logs -->
+    <section class="admin-section">
+      <div class="section-header logs-header">
+        <h2 class="section-title">System Logs</h2>
+        <div class="logs-controls">
+          <span class="log-status" id="logStatus">Live</span>
+          <button class="btn btn-outline btn-sm" id="toggleLogs">Pause</button>
+          <button class="btn btn-outline btn-sm" id="clearLogs">Clear</button>
+        </div>
+      </div>
+      <div class="log-box-wrapper">
+        <pre class="log-box" id="logBox">Loading…</pre>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  const box    = document.getElementById('logBox');
+  const status = document.getElementById('logStatus');
+  const toggleBtn = document.getElementById('toggleLogs');
+  const clearBtn  = document.getElementById('clearLogs');
+
+  let paused  = false;
+  let localCleared = false;
+  let lastLines = [];
+
+  function levelClass(line) {
+    if (line.includes('[ERROR]'))   return 'log-error';
+    if (line.includes('[WARNING]')) return 'log-warn';
+    if (line.includes('[INFO]'))    return 'log-info';
+    return 'log-debug';
+  }
+
+  async function fetchLogs() {
+    if (paused) return;
+    try {
+      const res  = await fetch('/admin/logs?n=300');
+      const data = await res.json();
+      if (data.error) return;
+      lastLines = data.lines;
+      render(lastLines);
+    } catch (e) {
+      status.textContent = 'Error';
+    }
+  }
+
+  function render(lines) {
+    if (localCleared) return;
+    const atBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 40;
+    box.innerHTML = lines.map(l =>
+      `<span class="${levelClass(l)}">${escHtml(l)}</span>`
+    ).join('\n');
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    paused = !paused;
+    toggleBtn.textContent = paused ? 'Resume' : 'Pause';
+    status.textContent    = paused ? 'Paused' : 'Live';
+    status.className      = paused ? 'log-status log-status-paused' : 'log-status';
+  });
+
+  clearBtn.addEventListener('click', () => {
+    localCleared = true;
+    box.innerHTML = '';
+    clearBtn.textContent = 'Show again';
+    clearBtn.addEventListener('click', () => {
+      localCleared = false;
+      clearBtn.textContent = 'Clear';
+      render(lastLines);
+    }, { once: true });
+  });
+
+  fetchLogs();
+  setInterval(fetchLogs, 5000);
+})();
+</script>
+{% endblock %}

@@ -52,7 +52,6 @@ VOLUME ["/app/user_data", "/app/data"]
 
 ENV PYTHONUNBUFFERED=1 \
     HEADLESS=1 \
-    USER_DATA_DIR=/app/user_data \
-    DB_PATH=/app/data/seen.db
+    DB_PATH=/app/data/hub.db
 
 ENTRYPOINT ["python", "-m", "src.main"]
