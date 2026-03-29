@@ -13,15 +13,18 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           host:     ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key:      ${{ secrets.VPS_SSH_KEY }}
           port:     22
+          envs:     GH_TOKEN
           script: |
             set -euo pipefail
             APP_DIR=/opt/hu-mail-bridge
-            REPO=https://github.com/sezaiemrekonuk/hacettepe-mail-bridge.git
+            REPO="https://${GH_TOKEN}@github.com/sezaiemrekonuk/hacettepe-mail-bridge.git"
 
             # ── Ensure git is installed ──────────────────────────────────────
             if ! command -v git &>/dev/null; then
