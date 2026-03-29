@@ -32,22 +32,22 @@ jobs:
             fi
             git config --global --add safe.directory "$APP_DIR"
 
-            # ── First-time: convert rsync deployment to git ──────────────────
+            # ── First-time: initialise git repo ──────────────────────────────
             if [ ! -d "$APP_DIR/.git" ]; then
-              echo "No git repo found — initialising from remote …"
+              echo "No git repo found — initialising …"
               cd "$APP_DIR"
               git init -b main
               git remote add origin "$REPO"
-              git fetch --depth=1 origin main
-              # Keep .env, user_data/, data/ (not tracked by git)
-              git checkout -f origin/main
-              git branch --set-upstream-to=origin/main main
             fi
 
-            # ── Pull latest code ─────────────────────────────────────────────
+            # ── Always refresh remote URL (token may have changed) ────────────
             cd "$APP_DIR"
+            git remote set-url origin "$REPO" 2>/dev/null || git remote add origin "$REPO"
+
+            # ── Pull latest code ─────────────────────────────────────────────
             git fetch --depth=1 origin main
-            git reset --hard origin/main
+            git checkout -f origin/main
+            git branch --set-upstream-to=origin/main main 2>/dev/null || true
 
             # ── Stamp deploy time (shown in admin panel) ─────────────────────
             mkdir -p "$APP_DIR/data"
